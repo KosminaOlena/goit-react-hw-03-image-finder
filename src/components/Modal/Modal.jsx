@@ -26,10 +26,11 @@ class Modal extends Component {
 
 
   render() {
+    const {tags, largeUrl} = this.props
     return(
       <Overlay onClick={this.handleOverlayClick}>
       <ModalWindow>
-        <img src={this.props.largeImg} alt="" />
+        <img src={largeUrl} alt={tags} />
       </ModalWindow>
     </Overlay>
     )
@@ -39,5 +40,6 @@ class Modal extends Component {
 export default Modal
 
 Modal.propTypes = {
-  largeImg: PropTypes.string.isRequired,
+  largeUrl: PropTypes.string.isRequired,
+  tags: PropTypes.string.isRequired,
   onClose: PropTypes.func.isRequired}

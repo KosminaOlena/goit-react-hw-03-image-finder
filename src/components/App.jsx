@@ -6,7 +6,7 @@ import { ImageGallery } from './ImageGallery/ImageGallery'
 import { Container } from './App.styled'
 import { Button } from './Button/Button'
 import { Loader } from './Loader/Loader'
-import Modal from './Modal/Modal'
+
 
 import { ToastContainer, toast } from 'react-toastify'
 
@@ -31,60 +31,39 @@ class App extends Component {
     arrayImages: [],
     isLoading: false,
     currentPage: 1,
-    selectedId: null,
-    showModal: false,
-    largeUrl: ''
+    totalPage: 0
   }
 
-  async componentDidUpdate(_, prevState){
+  componentDidUpdate(_, prevState){
 
-    const {query, currentPage, selectedId} = this.state;
-    if(prevState.query !== query || prevState.currentPage !== currentPage){  
+    const {query, currentPage} = this.state;
+    if(prevState.query !== query || prevState.currentPage !== currentPage){
+      this.getImages() 
+      }
+  }
 
-      try{
-        this.setState({isLoading: true});
-        const response = await getGallery(query, currentPage);
-        if(response.hits.length === 0){
-          toast.info('Sorry, no pictures with this name were found', toastConfig)
-        }
-        this.setState((prevState) => ({arrayImages: [...prevState.arrayImages, ...response.hits]}));
-      }catch(error){
-        toast.error('Oops, something went wrong', toastConfig);
-      }finally{
-        this.setState({isLoading: false});
-    }}
-
-    if(prevState.selectedId !== selectedId){
-      this.getLargeUrl();
-      this.toggleModal()
-
-    }
+  getImages = async () => {
+    const {query, currentPage} = this.state;
+    try{
+      this.setState({isLoading: true});
+      const response = await getGallery(query, currentPage);
+      if(response.hits.length === 0){
+        toast.info('Sorry, no pictures with this name were found', toastConfig)
+      }
+      this.setState((prevState) => ({
+        arrayImages: [...prevState.arrayImages, ...response.hits],
+        totalPage: Math.ceil(response.totalHits / 12)}));
+    }catch(error){
+      toast.error('Oops, something went wrong', toastConfig);
+    }finally{
+      this.setState({isLoading: false});
+      
+  }
   }
 
   incremCurrentPage = () => {
     this.setState((prevState) => ({currentPage: prevState.currentPage + 1}))
   }
-
-
-  onSelectedId = (imgId) => {
-    this.setState({
-      selectedId: imgId
-    })
-  }
-
-  toggleModal = () => {
-    this.setState ({
-      showModal: !this.state.showModal
-    })
-  }
-
-  getLargeUrl = () => {
-    const {selectedId, arrayImages} = this.state;
-    const selectedImages = arrayImages.find(image => image.id === selectedId);
-    const largeUrl = selectedImages.largeImageURL;
-    this.setState({largeUrl: largeUrl})
-  }
-
 
   createQuery = (data) => {
     if(data === ''){
@@ -95,13 +74,13 @@ class App extends Component {
   }
 
   render() { 
+    const {isLoading, arrayImages, currentPage, totalPage} = this.state;
     return(
       <Container>
         <Searchbar createQuery={this.createQuery}/>
-        {this.state.isLoading && <Loader />}
-        <ImageGallery images = {this.state.arrayImages} onSelectedId = {this.onSelectedId}/>
-        {this.state.arrayImages.length !== 0 && <Button incremCurrentPage = {this.incremCurrentPage}/>}
-        {this.state.showModal && <Modal onClose = {this.toggleModal} largeImg = {this.state.largeUrl}/>}
+        {isLoading && <Loader />}
+        <ImageGallery images = {arrayImages}/>
+        {arrayImages.length !== 0 && currentPage !== totalPage && <Button incremCurrentPage = {this.incremCurrentPage}/>}
         
         <ToastContainer
         position="top-center"
